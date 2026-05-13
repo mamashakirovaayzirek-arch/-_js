@@ -7,7 +7,10 @@ const { getRestaurantsList, getRestaurantById } = require('./data');
 const app = express();
 const PORT = 3001;
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true
+}));
 app.use(express.json());
 app.use('/images', express.static(path.join(__dirname, '../frontend/public/images')));
 
@@ -23,9 +26,16 @@ app.get('/api/restaurants', (req, res) => {
 });
 
 app.get('/api/restaurants/:id', (req, res) => {
+  try {
     const restaurant = getRestaurantById(req.params.id);
-    if (!restaurant) return res.status(404).json({ error: 'Ресторан не найден' });
+    if (!restaurant) {
+      return res.status(404).json({ error: 'Ресторан не найден' });
+    }
     res.json(restaurant);
+  } catch (error) {
+    console.error('Ошибка:', error);
+    res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+  }
 });
 
 // Получить скидку пользователя

@@ -41,35 +41,20 @@ function Home({ darkMode }) {
                 
                 <div className="restaurants-grid">
                     {restaurants.map(r => (
-                        <Link to={`/restaurant/${r.id}`} key={r.id} className="restaurant-card">
-                            <div className="restaurant-image" style={{ background: r.logo ? 'var(--white)' : 'var(--gradient)' }}>
-                                {r.logo ? (
-                                    <img 
-                                        src={r.logo} 
-                                        alt={r.name}
-                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                    />
-                                ) : '🍽️'}
-                                {r.rating >= 4.5 && <span className="restaurant-badge">⭐ Топ</span>}
+                        <Link to={`/restaurant/${r._id || r.id}`} key={r._id || r.id} className="restaurant-card">
+                            <div className="restaurant-image" style={{ background: 'var(--gradient)' }}>
+                                <span style={{ fontSize: '60px' }}>{r.image || '🍽️'}</span>
                             </div>
                             <div className="restaurant-info">
                                 <h3 className="restaurant-name">{r.name}</h3>
                                 <p style={{ color: 'var(--gray-500)', fontSize: '14px', marginBottom: '12px' }}>
-                                    {r.description}
+                                    {r.description || 'Описание ресторана'}
                                 </p>
                                 
                                 <div className="restaurant-meta">
-                                    <span className="rating">★ {r.rating}</span>
+                                    <span>⏱️ 30-45 мин</span>
                                     <span>•</span>
-                                    <span>30-45 мин</span>
-                                    <span>•</span>
-                                    <span>{r.address}</span>
-                                </div>
-                                
-                                <div className="categories-tags">
-                                    {r.categories.slice(0, 3).map((cat, idx) => (
-                                        <span key={idx} className="category-tag">{cat}</span>
-                                    ))}
+                                    <span>⭐ 4.5</span>
                                 </div>
                             </div>
                         </Link>

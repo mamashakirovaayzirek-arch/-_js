@@ -1,14 +1,72 @@
-// frontend/src/App.js
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import Home from './pages/Home';
 import Restaurant from './pages/Restaurant';
 import Cart from './pages/Cart';
 import OrderSuccess from './pages/OrderSuccess';
 import Profile from './pages/Profile';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import AddDish from './pages/AddDish';
+import OwnerPanel from './pages/OwnerPanel';
 import './App.css';
 
 const API_URL = 'http://localhost:3001/api';
+
+// Навигация с учётом авторизации и ролей
+const Navigation = () => {
+    const { user, logout, isAuthenticated } = useAuth();
+
+    return (
+        <nav className="navbar" style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '15px 30px',
+            background: '#ff6b35',
+            color: 'white'
+        }}>
+            <Link to="/" style={{ color: 'white', textDecoration: 'none', fontSize: '24px', fontWeight: 'bold' }}>
+                🍜 OshMenu
+            </Link>
+            <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                <Link to="/" style={{ color: 'white', textDecoration: 'none' }}>Главная</Link>
+                {isAuthenticated ? (
+                    <>
+                        {user?.role === 'owner' && (
+                            <Link to="/owner" style={{ color: 'white', textDecoration: 'none' }}>Мой ресторан</Link>
+                        )}
+                        {(user?.role === 'admin' || user?.role === 'owner') && (
+                            <Link to="/add-dish" style={{ color: 'white', textDecoration: 'none' }}>+ Блюдо</Link>
+                        )}
+                        <Link to="/cart" style={{ color: 'white', textDecoration: 'none' }}>🛒 Корзина</Link>
+                        <Link to="/profile" style={{ color: 'white', textDecoration: 'none' }}>👤 {user?.name}</Link>
+                        <button 
+                            onClick={logout}
+                            style={{
+                                background: 'white',
+                                color: '#ff6b35',
+                                border: 'none',
+                                padding: '8px 16px',
+                                borderRadius: '20px',
+                                cursor: 'pointer',
+                                fontWeight: 'bold'
+                            }}
+                        >
+                            Выйти
+                        </button>
+                    </>
+                ) : (
+                    <>
+                        <Link to="/login" style={{ color: 'white', textDecoration: 'none' }}>Вход</Link>
+                        <Link to="/register" style={{ color: 'white', textDecoration: 'none' }}>Регистрация</Link>
+                    </>
+                )}
+            </div>
+        </nav>
+    );
+};
 
 function App() {
     const [cart, setCart] = useState(() => {
@@ -127,86 +185,80 @@ function App() {
     }, {});
 
     return (
-        <BrowserRouter>
-            <div className={`app ${darkMode ? 'dark' : ''}`}>
-                <header className="header">
-                    <div className="header-content">
-                        <Link to="/" className="logo">
-                            <span className="logo-icon">🍽️</span>
-                            <span className="logo-text">Osh<span className="logo-accent">Menu</span></span>
-                        </Link>
-                        
-                        <div className="header-actions">
-                            <button 
-                                className="btn-icon theme-toggle"
-                                onClick={toggleDarkMode}
-                                title={darkMode ? 'Дневной режим' : 'Ночной режим'}
-                            >
-                                {darkMode ? '☀️' : '🌙'}
-                            </button>
-                            
-                            <Link to="/profile" className="profile-link">
-                                👤 Профиль
+        <AuthProvider>
+            <BrowserRouter>
+                <div className={`app ${darkMode ? 'dark' : ''}`}>
+                    <header className="header">
+                        <div className="header-content">
+                            <Link to="/" className="logo">
+                                <span className="logo-icon">🍽️</span>
+                                <span className="logo-text">Osh<span className="logo-accent">Menu</span></span>
                             </Link>
                             
-                            <Link to="/cart" className="btn-icon cart-btn">
-                                🛒
-                                {cartCount > 0 && (
-                                    <>
-                                        <span className="cart-badge">{cartCount}</span>
-                                        <span style={{ marginLeft: '4px' }}>{cartTotal} сом</span>
-                                    </>
-                                )}
-                            </Link>
+                            <div className="header-actions">
+                                <button 
+                                    className="btn-icon theme-toggle"
+                                    onClick={toggleDarkMode}
+                                    title={darkMode ? 'Дневной режим' : 'Ночной режим'}
+                                >
+                                    {darkMode ? '☀️' : '🌙'}
+                                </button>
+                                
+                                <Navigation />
+                            </div>
                         </div>
-                    </div>
-                </header>
+                    </header>
 
-                {notification && (
-                    <div className="notification">{notification}</div>
-                )}
+                    {notification && (
+                        <div className="notification">{notification}</div>
+                    )}
 
-                <main className="main">
-                    <Routes>
-                        <Route path="/" element={<Home darkMode={darkMode} />} />
-                        <Route path="/restaurant/:id" element={
-                            <Restaurant 
-                                cart={cart}
-                                addToCart={addToCart}
-                                updateQuantity={updateQuantity}
-                                darkMode={darkMode}
-                            />
-                        } />
-                        <Route path="/cart" element={
-                            <Cart 
-                                cart={cart}
-                                cartByRestaurant={cartByRestaurant}
-                                updateQuantity={updateQuantity}
-                                removeFromCart={removeFromCart}
-                                clearCart={clearCart}
-                                total={cartTotal}
-                                userPhone={userPhone}
-                                setUserPhone={setUserPhone}
-                            />
-                        } />
-                        <Route path="/order-success" element={<OrderSuccess />} />
-                        <Route path="/profile" element={
-                            <Profile 
-                                userPhone={userPhone}
-                                setUserPhone={setUserPhone}
-                                cart={cart}
-                                clearCart={clearCart}
-                            />
-                        } />
-                    </Routes>
-                </main>
+                    <main className="main">
+                        <Routes>
+                            <Route path="/" element={<Home darkMode={darkMode} />} />
+                            <Route path="/restaurant/:id" element={
+                                <Restaurant 
+                                    cart={cart}
+                                    addToCart={addToCart}
+                                    updateQuantity={updateQuantity}
+                                    darkMode={darkMode}
+                                />
+                            } />
+                            <Route path="/cart" element={
+                                <Cart 
+                                    cart={cart}
+                                    cartByRestaurant={cartByRestaurant}
+                                    updateQuantity={updateQuantity}
+                                    removeFromCart={removeFromCart}
+                                    clearCart={clearCart}
+                                    total={cartTotal}
+                                    userPhone={userPhone}
+                                    setUserPhone={setUserPhone}
+                                />
+                            } />
+                            <Route path="/order-success" element={<OrderSuccess />} />
+                            <Route path="/profile" element={
+                                <Profile 
+                                    userPhone={userPhone}
+                                    setUserPhone={setUserPhone}
+                                    cart={cart}
+                                    clearCart={clearCart}
+                                />
+                            } />
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/register" element={<Register />} />
+                            <Route path="/add-dish" element={<AddDish />} />
+                            <Route path="/owner" element={<OwnerPanel />} />
+                        </Routes>
+                    </main>
 
-                <footer className="footer">
-                    <p>© 2024 OshMenu — Онлайн меню ресторанов Оша</p>
-                    <p>🌙 Ночной режим | 🎁 Скидка каждый 15-й заказ</p>
-                </footer>
-            </div>
-        </BrowserRouter>
+                    <footer className="footer">
+                        <p>© 2024 OshMenu — Онлайн меню ресторанов Оша</p>
+                        <p>🌙 Ночной режим | 🎁 Скидка каждый 15-й заказ | 💎 Накопительная скидка</p>
+                    </footer>
+                </div>
+            </BrowserRouter>
+        </AuthProvider>
     );
 }
 

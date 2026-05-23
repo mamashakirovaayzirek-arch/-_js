@@ -179,6 +179,30 @@ h1, h2, h3, h4 {
     background: var(--gray-100);
 }
 
+/* === НАВИГАЦИЯ (новая) === */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background: #ff6b35;
+    color: white;
+    border-radius: var(--radius-full);
+}
+
+.navbar a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    transition: all 0.3s;
+}
+
+.navbar a:hover {
+    background: rgba(255,255,255,0.2);
+}
+
 /* === ГЕРОЙ-СЕКЦИЯ === */
 .hero {
     position: relative;
@@ -633,7 +657,7 @@ h1, h2, h3, h4 {
     color: var(--dark);
 }
 
-/* === СКИДКА === */
+/* === СКИДКА (обновлённая) === */
 .discount-banner {
     background: var(--gradient);
     color: var(--dark);
@@ -671,6 +695,51 @@ h1, h2, h3, h4 {
 .discount-text p {
     font-size: 14px;
     opacity: 0.9;
+}
+
+/* === НАКОПИТЕЛЬНАЯ СКИДКА (новая) === */
+.loyalty-banner {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 24px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-md);
+}
+
+.loyalty-banner h3 {
+    font-size: 18px;
+    margin-bottom: 12px;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.loyalty-progress {
+    height: 12px;
+    background: rgba(255,255,255,0.3);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.loyalty-progress-fill {
+    height: 100%;
+    background: #ffd700;
+    border-radius: var(--radius-full);
+    transition: width 0.5s ease;
+}
+
+.loyalty-text {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.loyalty-discount-active {
+    background: #27ae60 !important;
+    color: white !important;
+}
+
+.loyalty-discount-active h3 {
+    color: #ffd700;
 }
 
 /* === ФОРМА ЗАКАЗА === */
@@ -819,6 +888,240 @@ h1, h2, h3, h4 {
 .clear-cart-btn:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
+}
+
+/* === АВТОРИЗАЦИЯ (новая) === */
+.auth-container {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 30px;
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--gray-300);
+}
+
+.auth-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: var(--dark);
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.auth-container input,
+.auth-container select,
+.auth-container textarea {
+    width: 100%;
+    padding: 14px 16px;
+    margin-bottom: 15px;
+    border: 2px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    font-size: 16px;
+    background: var(--white);
+    color: var(--dark);
+    transition: all 0.3s;
+}
+
+.auth-container input:focus,
+.auth-container select:focus,
+.auth-container textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.auth-container button {
+    width: 100%;
+    padding: 14px;
+    background: var(--gradient);
+    color: var(--dark);
+    border: none;
+    border-radius: var(--radius-full);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.auth-container button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.auth-container p {
+    text-align: center;
+    margin-top: 15px;
+    color: var(--gray-500);
+}
+
+.auth-container a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.auth-container a:hover {
+    text-decoration: underline;
+}
+
+.error {
+    color: #FF4757;
+    text-align: center;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.message {
+    text-align: center;
+    padding: 12px;
+    border-radius: var(--radius-md);
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.message.success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.message.error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* === ДОБАВЛЕНИЕ БЛЮДА (новая) === */
+.add-dish-container {
+    max-width: 600px;
+    margin: 30px auto;
+    padding: 30px;
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--gray-300);
+}
+
+.add-dish-container h2 {
+    text-align: center;
+    margin-bottom: 24px;
+    color: var(--dark);
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.add-dish-container textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.add-dish-container input[type="file"] {
+    padding: 10px;
+    border: 2px dashed var(--gray-300);
+    cursor: pointer;
+}
+
+.add-dish-container input[type="file"]:hover {
+    border-color: var(--primary);
+}
+
+/* === ПАНЕЛЬ ВЛАДЕЛЬЦА (новая) === */
+.owner-panel {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.owner-panel h2 {
+    font-size: 28px;
+    margin-bottom: 24px;
+    color: var(--dark);
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.btn-add {
+    background: var(--secondary);
+    color: var(--white);
+    padding: 14px 28px;
+    border: none;
+    border-radius: var(--radius-full);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 24px;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.btn-add:hover {
+    background: #25a99c;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.dishes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.dish-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-300);
+    transition: all 0.3s;
+}
+
+.dish-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary);
+}
+
+.dish-card img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+}
+
+.dish-card-info {
+    padding: 16px;
+}
+
+.dish-card-info h4 {
+    font-size: 16px;
+    margin-bottom: 8px;
+    color: var(--dark);
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.dish-card-info p {
+    font-size: 14px;
+    color: var(--gray-500);
+    margin-bottom: 4px;
+}
+
+.dish-card-info .price {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-top: 8px;
+}
+
+.btn-delete {
+    background: #FF4757;
+    color: var(--white);
+    border: none;
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    margin: 0 16px 16px;
+    transition: all 0.3s;
+}
+
+.btn-delete:hover {
+    background: #e04050;
+    transform: translateY(-2px);
 }
 
 /* === ПРОФИЛЬ === */
@@ -1118,5 +1421,15 @@ h1, h2, h3, h4 {
     
     .radio-group {
         flex-direction: column;
+    }
+    
+    .navbar {
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px;
+    }
+    
+    .dishes-grid {
+        grid-template-columns: 1fr;
     }
 }

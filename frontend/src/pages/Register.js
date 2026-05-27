@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -9,19 +8,16 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('customer');
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const { register } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('http://localhost:3001/api/auth/register', {
-        name, email, password, role
-      });
-      login(res.data.token, res.data.user);
+      await register(name, email, password, role);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Ошибка регистрации');
+      setError(err.message || 'Ошибка регистрации');
     }
   };
 
@@ -54,6 +50,7 @@ const Register = () => {
         <select value={role} onChange={(e) => setRole(e.target.value)}>
           <option value="customer">Клиент</option>
           <option value="owner">Владелец ресторана</option>
+          <option value="admin">Администратор</option>
         </select>
         <button type="submit">Зарегистрироваться</button>
       </form>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import { db } from '../firebase';
+import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 
 const Restaurant = () => {
   const { id } = useParams();
@@ -15,12 +16,20 @@ const Restaurant = () => {
 
   const fetchData = async () => {
     try {
-      const [restRes, dishesRes] = await Promise.all([
-        axios.get(`http://localhost:3001/api/restaurants/${id}`),
-        axios.get(`http://localhost:3001/api/dishes/restaurant/${id}`)
-      ]);
-      setRestaurant(restRes.data);
-      setDishes(dishesRes.data);
+      // Получаем ресторан
+      const restDoc = await getDoc(doc(db, 'restaurants', id));
+      if (restDoc.exists()) {
+        setRestaurant({ id: restDoc.id, ...restDoc.data() });
+      }
+
+      // Получаем блюда ресторана
+      const q = query(collection(db, 'dishes'), where('restaurantId', '==', id));
+      const querySnapshot = await getDocs(q);
+      const dishesList = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setDishes(dishesList);
       setLoading(false);
     } catch (err) {
       console.error('Ошибка:', err);
@@ -29,15 +38,15 @@ const Restaurant = () => {
   };
 
   const addToCart = (dish) => {
-    const existing = cart.find(item => item.dishId === dish._id);
+    const existing = cart.find(item => item.dishId === dish.id);
     let newCart;
     if (existing) {
       newCart = cart.map(item => 
-        item.dishId === dish._id ? {...item, quantity: item.quantity + 1} : item
+        item.dishId === dish.id ? {...item, quantity: item.quantity + 1} : item
       );
     } else {
       newCart = [...cart, {
-        dishId: dish._id,
+        dishId: dish.id,
         name: dish.name,
         price: dish.price,
         quantity: 1,
@@ -83,12 +92,12 @@ const Restaurant = () => {
         <h2>Меню</h2>
         <div className="menu-grid">
           {dishes.map(dish => {
-            const qty = getQuantity(dish._id);
+            const qty = getQuantity(dish.id);
             return (
-              <div key={dish._id} className="menu-item">
+              <div key={dish.id} className="menu-item">
                 <div className="menu-item-image">
                   {dish.image ? (
-                    <img src={`http://localhost:3001${dish.image}`} alt={dish.name} style={{width:'100%',height:'100%',objectFit:'cover'}} />
+                    <img src={dish.image} alt={dish.name} style={{width:'100%',height:'100%',objectFit:'cover'}} />
                   ) : '🍽️'}
                 </div>
                 <div className="menu-item-content">
@@ -100,7 +109,7 @@ const Restaurant = () => {
                       <button className="add-btn" onClick={() => addToCart(dish)}>+</button>
                     ) : (
                       <div className="quantity-control">
-                        <button className="qty-btn" onClick={() => removeFromCart(dish._id)}>−</button>
+                        <button className="qty-btn" onClick={() => removeFromCart(dish.id)}>−</button>
                         <span className="quantity">{qty}</span>
                         <button className="qty-btn" onClick={() => addToCart(dish)}>+</button>
                       </div>

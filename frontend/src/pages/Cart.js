@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import { db } from '../firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 const Cart = () => {
   const { user } = useAuth();
@@ -60,26 +61,32 @@ const Cart = () => {
 
     setLoading(true);
     try {
-      const dishes = cart.map(item => ({
-        dishId: item.dishId,
-        quantity: item.quantity,
-        price: item.price
-      }));
-
       const orderData = {
-        dishes,
+        userId: user.id,
+        userName: user.name,
+        userEmail: user.email,
+        dishes: cart.map(item => ({
+          dishId: item.dishId,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        totalAmount,
+        finalAmount: totalAmount,
+        discountApplied: 0,
+        status: 'pending',
         orderType,
         phone,
-        ...(orderType === 'delivery' && { address }),
-        ...(orderType === 'dine-in' && { address: `Стол ${table}` })
+        address: orderType === 'delivery' ? address : (orderType === 'dine-in' ? `Стол ${table}` : 'Самовывоз'),
+        createdAt: new Date().toISOString()
       };
 
-      await axios.post('http://localhost:3001/api/orders', orderData);
+      await addDoc(collection(db, 'orders'), orderData);
       localStorage.removeItem('cart');
       setCart([]);
       navigate('/order-success');
     } catch (err) {
-      alert('Ошибка оформления: ' + (err.response?.data?.message || err.message));
+      alert('Ошибка оформления: ' + err.message);
     } finally {
       setLoading(false);
     }

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { db, storage } from '../firebase';
+import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const AddDish = () => {
   const { user } = useAuth();
@@ -15,39 +17,45 @@ const AddDish = () => {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    // Получаем список ресторанов
-    axios.get('http://localhost:3001/api/restaurants')
-      .then(res => {
-        setRestaurants(res.data);
-        // Если owner — автоматически выбираем его ресторан
-        if (user?.role === 'owner' && user?.restaurant) {
-          setRestaurant(user.restaurant);
-        }
-      });
-  }, [user]);
+    fetchRestaurants();
+  }, []);
+
+  const fetchRestaurants = async () => {
+    const snapshot = await getDocs(collection(db, 'restaurants'));
+    const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    setRestaurants(list);
+    if (user?.role === 'owner' && user?.restaurant) {
+      setRestaurant(user.restaurant);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    const formData = new FormData();
-    formData.append('name', name);
-    formData.append('price', price);
-    formData.append('ingredients', ingredients);
-    formData.append('restaurant', restaurant);
-    if (image) formData.append('image', image);
-
     try {
-      await axios.post('http://localhost:3001/api/dishes', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      let imageUrl = '';
+      if (image) {
+        const storageRef = ref(storage, `dishes/${Date.now()}_${image.name}`);
+        await uploadBytes(storageRef, image);
+        imageUrl = await getDownloadURL(storageRef);
+      }
+
+      await addDoc(collection(db, 'dishes'), {
+        name,
+        price: Number(price),
+        ingredients,
+        image: imageUrl,
+        restaurantId: restaurant,
+        createdAt: new Date().toISOString()
       });
+
       setMessage('✅ Блюдо успешно добавлено!');
       setTimeout(() => navigate('/owner'), 1500);
     } catch (err) {
-      setMessage('❌ Ошибка: ' + (err.response?.data?.message || err.message));
+      setMessage('❌ Ошибка: ' + err.message);
     }
   };
 
-  // Только admin и owner могут добавлять
   if (!user || (user.role !== 'admin' && user.role !== 'owner')) {
     return <p>Доступ запрещён</p>;
   }
@@ -88,12 +96,11 @@ const AddDish = () => {
           required
         />
         
-        {/* Выбор ресторана (только для admin, owner видит только свой) */}
         {user.role === 'admin' ? (
           <select value={restaurant} onChange={(e) => setRestaurant(e.target.value)} required>
             <option value="">Выберите ресторан</option>
             {restaurants.map(r => (
-              <option key={r._id} value={r._id}>{r.name}</option>
+              <option key={r.id} value={r.id}>{r.name}</option>
             ))}
           </select>
         ) : (

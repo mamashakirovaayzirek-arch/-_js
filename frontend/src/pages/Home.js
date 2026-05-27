@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import { db } from '../firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
 const Home = () => {
   const [restaurants, setRestaurants] = useState([]);
@@ -12,8 +13,12 @@ const Home = () => {
 
   const fetchRestaurants = async () => {
     try {
-      const res = await axios.get('http://localhost:3001/api/restaurants');
-      setRestaurants(res.data);
+      const querySnapshot = await getDocs(collection(db, 'restaurants'));
+      const restaurantsList = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setRestaurants(restaurantsList);
       setLoading(false);
     } catch (err) {
       console.error('Ошибка загрузки ресторанов:', err);
@@ -40,10 +45,10 @@ const Home = () => {
         <h2 className="section-title">Рестораны</h2>
         <div className="restaurants-grid">
           {restaurants.map(r => (
-            <Link to={`/restaurant/${r._id}`} key={r._id} className="restaurant-card">
+            <Link to={`/restaurant/${r.id}`} key={r.id} className="restaurant-card">
               <div className="restaurant-image">
                 {r.image ? (
-                  <img src={`http://localhost:3001${r.image}`} alt={r.name} style={{width:'100%',height:'100%',objectFit:'cover'}} />
+                  <img src={r.image} alt={r.name} style={{width:'100%',height:'100%',objectFit:'cover'}} />
                 ) : (
                   <span style={{fontSize:'60px'}}>🍽️</span>
                 )}

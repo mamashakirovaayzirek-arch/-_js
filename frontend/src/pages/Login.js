@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -13,21 +12,10 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('http://localhost:3001/api/auth/login', {
-        email, password
-      });
-      login(res.data.token, res.data.user);
-      
-      // Редирект по роли
-      if (res.data.user.role === 'owner') {
-        navigate('/owner');
-      } else if (res.data.user.role === 'admin') {
-        navigate('/');
-      } else {
-        navigate('/');
-      }
+      await login(email, password);
+      navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Ошибка входа');
+      setError('Неверный email или пароль');
     }
   };
 

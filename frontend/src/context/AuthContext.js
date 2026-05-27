@@ -1,38 +1,81 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import axios from 'axios';
+import { auth, db } from '../firebase';
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged,
+  updateProfile
+} from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      // Получаем данные пользователя
-      axios.get('http://localhost:3001/api/auth/me')
-        .then(res => setUser(res.data))
-        .catch(() => logout());
-    }
-  }, [token]);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+        const userData = userDoc.data();
+        
+        setUser({
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName || userData?.name || '',
+          email: firebaseUser.email,
+          role: userData?.role || 'customer',
+          totalSpent: userData?.totalSpent || 0,
+          restaurant: userData?.restaurant || null
+        });
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
 
-  const login = (token, userData) => {
-    localStorage.setItem('token', token);
-    setToken(token);
-    setUser(userData);
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    return () => unsubscribe();
+  }, []);
+
+  const register = async (name, email, password, role = 'customer') => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const firebaseUser = userCredential.user;
+    
+    await updateProfile(firebaseUser, { displayName: name });
+    
+    await setDoc(doc(db, 'users', firebaseUser.uid), {
+      name,
+      email,
+      role,
+      totalSpent: 0,
+      restaurant: role === 'owner' ? null : null,
+      createdAt: new Date().toISOString()
+    });
+
+    return firebaseUser;
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setToken(null);
+  const login = async (email, password) => {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    return userCredential.user;
+  };
+
+  const logout = async () => {
+    await signOut(auth);
     setUser(null);
-    delete axios.defaults.headers.common['Authorization'];
   };
+
+  if (loading) return <div className="loading">Загрузка...</div>;
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      register, 
+      login, 
+      logout, 
+      isAuthenticated: !!user 
+    }}>
       {children}
     </AuthContext.Provider>
   );

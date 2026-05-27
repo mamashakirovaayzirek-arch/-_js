@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
+import { db } from '../firebase';
+import { collection, getDocs, query, where, deleteDoc, doc } from 'firebase/firestore';
 
 const OwnerPanel = () => {
   const { user } = useAuth();
@@ -10,20 +11,31 @@ const OwnerPanel = () => {
 
   useEffect(() => {
     if (user?.restaurant) {
-      axios.get(`http://localhost:3001/api/dishes/restaurant/${user.restaurant}`)
-        .then(res => {
-          setDishes(res.data);
-          setLoading(false);
-        })
-        .catch(() => setLoading(false));
+      fetchDishes();
     }
   }, [user]);
+
+  const fetchDishes = async () => {
+    try {
+      const q = query(collection(db, 'dishes'), where('restaurantId', '==', user.restaurant));
+      const querySnapshot = await getDocs(q);
+      const dishesList = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setDishes(dishesList);
+      setLoading(false);
+    } catch (err) {
+      console.error('Ошибка:', err);
+      setLoading(false);
+    }
+  };
 
   const handleDelete = async (dishId) => {
     if (!window.confirm('Удалить блюдо?')) return;
     try {
-      await axios.delete(`http://localhost:3001/api/dishes/${dishId}`);
-      setDishes(dishes.filter(d => d._id !== dishId));
+      await deleteDoc(doc(db, 'dishes', dishId));
+      setDishes(dishes.filter(d => d.id !== dishId));
     } catch (err) {
       alert('Ошибка удаления');
     }
@@ -48,9 +60,9 @@ const OwnerPanel = () => {
       ) : (
         <div className="dishes-grid">
           {dishes.map(dish => (
-            <div key={dish._id} className="dish-card">
+            <div key={dish.id} className="dish-card">
               <img 
-                src={`http://localhost:3001${dish.image}`} 
+                src={dish.image || '🍽️'} 
                 alt={dish.name}
                 style={{ width: '150px', height: '150px', objectFit: 'cover' }}
               />
@@ -58,7 +70,7 @@ const OwnerPanel = () => {
               <p>💰 {dish.price} сом</p>
               <p>📝 {dish.ingredients}</p>
               <button 
-                onClick={() => handleDelete(dish._id)}
+                onClick={() => handleDelete(dish.id)}
                 className="btn-delete"
               >
                 Удалить

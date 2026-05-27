@@ -4,6 +4,57 @@ import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase';
 import { collection, addDoc } from 'firebase/firestore';
 
+const translations = {
+  ru: {
+    title: '🛒 Корзина',
+    empty: 'Корзина пуста',
+    emptyDesc: 'Добавьте блюда из ресторанов',
+    remove: 'Удалить',
+    total: 'Итого',
+    grandTotal: 'Общая сумма',
+    checkout: '📋 Оформление заказа',
+    deliveryMethod: 'Способ получения',
+    delivery: '🚚 Доставка',
+    pickup: '🥡 Навынос',
+    dineIn: '🍽️ В заведении',
+    address: 'Адрес доставки',
+    addressPlaceholder: 'Улица, дом, квартира',
+    table: 'Номер стола',
+    tablePlaceholder: 'Например: 5',
+    phone: 'Телефон',
+    phonePlaceholder: '+996 XXX XXX XXX',
+    submit: 'Оформить заказ на',
+    submitting: 'Оформляем...',
+    loginFirst: 'Сначала войдите в аккаунт!',
+    emptyCart: 'Корзина пуста!',
+    error: 'Ошибка оформления'
+  },
+  ky: {
+    title: '🛒 Себет',
+    empty: 'Себет бош',
+    emptyDesc: 'Ресторандан тамак кошуңуз',
+    remove: 'Өчүрүү',
+    total: 'Жыйынтыгы',
+    grandTotal: 'Жалпы сумма',
+    checkout: '📋 Буйрутма берүү',
+    deliveryMethod: 'Алуу ыкмасы',
+    delivery: '🚚 Жеткирүү',
+    pickup: '🥡 Алуу',
+    dineIn: '🍽️ Жайдан',
+    address: 'Жеткирүү дареги',
+    addressPlaceholder: 'Көчө, үй, батир',
+    table: 'Стол номери',
+    tablePlaceholder: 'Мисалы: 5',
+    phone: 'Телефон',
+    phonePlaceholder: '+996 XXX XXX XXX',
+    submit: 'Буйрутма берүү',
+    submitting: 'Буйрутма берилүүдө...',
+    loginFirst: 'Алгач аккаунтуңузга кириңиз!',
+    emptyCart: 'Себет бош!',
+    error: 'Буйрутма катасы'
+  }
+};
+
 const Cart = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -13,10 +64,16 @@ const Cart = () => {
   const [phone, setPhone] = useState('');
   const [table, setTable] = useState('');
   const [loading, setLoading] = useState(false);
+  const [lang, setLang] = useState(() => localStorage.getItem('lang') || 'ru');
+
+  const t = translations[lang];
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem('cart')) || [];
     setCart(saved);
+    const handleLangChange = () => setLang(localStorage.getItem('lang') || 'ru');
+    window.addEventListener('langChange', handleLangChange);
+    return () => window.removeEventListener('langChange', handleLangChange);
   }, []);
 
   const removeItem = (dishId) => {
@@ -50,12 +107,12 @@ const Cart = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user) {
-      alert('Сначала войдите в аккаунт!');
+      alert(t.loginFirst);
       navigate('/login');
       return;
     }
     if (cart.length === 0) {
-      alert('Корзина пуста!');
+      alert(t.emptyCart);
       return;
     }
 
@@ -86,7 +143,7 @@ const Cart = () => {
       setCart([]);
       navigate('/order-success');
     } catch (err) {
-      alert('Ошибка оформления: ' + err.message);
+      alert(t.error + ': ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -96,15 +153,15 @@ const Cart = () => {
     return (
       <div className="empty-cart">
         <div className="empty-cart-icon">🛒</div>
-        <h2>Корзина пуста</h2>
-        <p>Добавьте блюда из ресторанов</p>
+        <h2>{t.empty}</h2>
+        <p>{t.emptyDesc}</p>
       </div>
     );
   }
 
   return (
     <div className="cart-page">
-      <h1>🛒 Корзина</h1>
+      <h1>{t.title}</h1>
 
       {Object.entries(cartByRestaurant).map(([restId, data]) => (
         <div key={restId} className="cart-restaurant">
@@ -125,58 +182,58 @@ const Cart = () => {
             </div>
           ))}
           <div className="cart-restaurant-total">
-            Итого: {data.items.reduce((s, i) => s + i.price * i.quantity, 0)} сом
+            {t.total}: {data.items.reduce((s, i) => s + i.price * i.quantity, 0)} сом
           </div>
         </div>
       ))}
 
       <div className="grand-total">
-        <p>Общая сумма:</p>
+        <p>{t.grandTotal}:</p>
         <p className="grand-total-amount">{totalAmount} сом</p>
       </div>
 
       <form onSubmit={handleSubmit} className="order-section">
-        <h2>📋 Оформление заказа</h2>
+        <h2>{t.checkout}</h2>
 
         <div className="form-group">
-          <label>Способ получения</label>
+          <label>{t.deliveryMethod}</label>
           <div className="radio-group">
             <label className="radio-label">
               <input type="radio" value="delivery" checked={orderType === 'delivery'} onChange={(e) => setOrderType(e.target.value)} />
-              🚚 Доставка
+              {t.delivery}
             </label>
             <label className="radio-label">
               <input type="radio" value="pickup" checked={orderType === 'pickup'} onChange={(e) => setOrderType(e.target.value)} />
-              🥡 Навынос
+              {t.pickup}
             </label>
             <label className="radio-label">
               <input type="radio" value="dine-in" checked={orderType === 'dine-in'} onChange={(e) => setOrderType(e.target.value)} />
-              🍽️ В заведении
+              {t.dineIn}
             </label>
           </div>
         </div>
 
         {orderType === 'delivery' && (
           <div className="form-group">
-            <label>Адрес доставки</label>
-            <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Улица, дом, квартира" required />
+            <label>{t.address}</label>
+            <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t.addressPlaceholder} required />
           </div>
         )}
 
         {orderType === 'dine-in' && (
           <div className="form-group">
-            <label>Номер стола</label>
-            <input type="text" value={table} onChange={(e) => setTable(e.target.value)} placeholder="Например: 5" required />
+            <label>{t.table}</label>
+            <input type="text" value={table} onChange={(e) => setTable(e.target.value)} placeholder={t.tablePlaceholder} required />
           </div>
         )}
 
         <div className="form-group">
-          <label>Телефон</label>
-          <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+996 XXX XXX XXX" required />
+          <label>{t.phone}</label>
+          <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t.phonePlaceholder} required />
         </div>
 
         <button type="submit" className="submit-btn" disabled={loading}>
-          {loading ? 'Оформляем...' : `Оформить заказ на ${totalAmount} сом`}
+          {loading ? t.submitting : `${t.submit} ${totalAmount} сом`}
         </button>
       </form>
     </div>

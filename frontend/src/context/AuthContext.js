@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
       if (firebaseUser) {
         const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
         const userData = userDoc.data();
-        
+
         setUser({
           id: firebaseUser.uid,
           name: firebaseUser.displayName || userData?.name || '',
@@ -38,18 +38,18 @@ export const AuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
-  const register = async (name, email, password, role = 'customer') => {
+  const register = async (name, email, password, role = 'customer', restaurantId = null) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const firebaseUser = userCredential.user;
-    
+
     await updateProfile(firebaseUser, { displayName: name });
-    
+
     await setDoc(doc(db, 'users', firebaseUser.uid), {
       name,
       email,
       role,
       totalSpent: 0,
-      restaurant: role === 'owner' ? null : null,
+      restaurant: role === 'owner' ? restaurantId : null,
       createdAt: new Date().toISOString()
     });
 

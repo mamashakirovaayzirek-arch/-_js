@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Home from './pages/Home';
@@ -15,27 +15,48 @@ import './App.css';
 
 const Navigation = () => {
   const { user, logout, isAuthenticated } = useAuth();
+  const [lang, setLang] = useState(() => localStorage.getItem('lang') || 'ru');
+
+  useEffect(() => {
+    // Синхронизируем язык со всеми страницами
+    const handleStorage = () => {
+      setLang(localStorage.getItem('lang') || 'ru');
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  const toggleLang = () => {
+    const newLang = lang === 'ru' ? 'ky' : 'ru';
+    setLang(newLang);
+    localStorage.setItem('lang', newLang);
+    // Принудительно обновляем все компоненты
+    window.dispatchEvent(new Event('langChange'));
+  };
 
   return (
     <nav className="navbar">
       <Link to="/" className="logo">🍜 OshMenu</Link>
       <div className="nav-links">
-        <Link to="/">Главная</Link>
+        <Link to="/">{lang === 'ru' ? 'Главная' : 'Башкы'}</Link>
         {isAuthenticated ? (
           <>
-            {user?.role === 'admin' && <Link to="/admin">🔧 Админ</Link>}
-            {user?.role === 'owner' && <Link to="/owner">Мой ресторан</Link>}
-            {(user?.role === 'admin' || user?.role === 'owner') && <Link to="/add-dish">+ Блюдо</Link>}
-            <Link to="/cart">🛒 Корзина</Link>
+            {user?.role === 'admin' && <Link to="/admin">🔧 {lang === 'ru' ? 'Админ' : 'Админ'}</Link>}
+            {user?.role === 'owner' && <Link to="/owner">{lang === 'ru' ? 'Мой ресторан' : 'Менин рестораным'}</Link>}
+            {(user?.role === 'admin' || user?.role === 'owner') && <Link to="/add-dish">+ {lang === 'ru' ? 'Блюдо' : 'Тамак'}</Link>}
+            <Link to="/cart">🛒 {lang === 'ru' ? 'Корзина' : 'Себет'}</Link>
             <Link to="/profile">👤 {user?.name}</Link>
-            <button onClick={logout} className="btn-logout">Выйти</button>
+            <button onClick={logout} className="btn-logout">{lang === 'ru' ? 'Выйти' : 'Чыгуу'}</button>
           </>
         ) : (
           <>
-            <Link to="/login">Вход</Link>
-            <Link to="/register">Регистрация</Link>
+            <Link to="/login">{lang === 'ru' ? 'Вход' : 'Кирүү'}</Link>
+            <Link to="/register">{lang === 'ru' ? 'Регистрация' : 'Катталуу'}</Link>
           </>
         )}
+        <button className="lang-toggle-nav" onClick={toggleLang}>
+          {lang === 'ru' ? '🇰🇬 Кыргызча' : '🇷🇺 Русский'}
+        </button>
       </div>
     </nav>
   );

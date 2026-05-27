@@ -1,68 +1,63 @@
-// frontend/src/pages/Home.js
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3001/api';
+const Home = () => {
+  const [restaurants, setRestaurants] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-function Home({ darkMode }) {
-    const [restaurants, setRestaurants] = useState([]);
-    const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    fetchRestaurants();
+  }, []);
 
-    useEffect(() => {
-        axios.get(`${API_URL}/restaurants`)
-            .then(res => {
-                setRestaurants(res.data);
-                setLoading(false);
-            })
-            .catch(err => {
-                console.error(err);
-                setLoading(false);
-            });
-    }, []);
+  const fetchRestaurants = async () => {
+    try {
+      const res = await axios.get('http://localhost:3001/api/restaurants');
+      setRestaurants(res.data);
+      setLoading(false);
+    } catch (err) {
+      console.error('Ошибка загрузки ресторанов:', err);
+      setLoading(false);
+    }
+  };
 
-    if (loading) return <div className="main"><p>Загрузка...</p></div>;
+  if (loading) return <div className="loading">Загрузка ресторанов...</div>;
 
-    return (
-        <div>
-            <div className="hero">
-                <div className="hero-content">
-                    <h1 className="hero-title">
-                        Доставка из лучших <span className="gradient-text">ресторанов Оша</span>
-                    </h1>
-                    <p className="hero-subtitle">
-                        Заказывайте любимые блюда онлайн — быстро, удобно, со скидками!
-                    </p>
-                </div>
-            </div>
-
-            <div className="main">
-                <h2 className="section-title">Рестораны</h2>
-                
-                <div className="restaurants-grid">
-                    {restaurants.map(r => (
-                        <Link to={`/restaurant/${r._id || r.id}`} key={r._id || r.id} className="restaurant-card">
-                            <div className="restaurant-image" style={{ background: 'var(--gradient)' }}>
-                                <span style={{ fontSize: '60px' }}>{r.image || '🍽️'}</span>
-                            </div>
-                            <div className="restaurant-info">
-                                <h3 className="restaurant-name">{r.name}</h3>
-                                <p style={{ color: 'var(--gray-500)', fontSize: '14px', marginBottom: '12px' }}>
-                                    {r.description || 'Описание ресторана'}
-                                </p>
-                                
-                                <div className="restaurant-meta">
-                                    <span>⏱️ 30-45 мин</span>
-                                    <span>•</span>
-                                    <span>⭐ 4.5</span>
-                                </div>
-                            </div>
-                        </Link>
-                    ))}
-                </div>
-            </div>
+  return (
+    <div className="home">
+      <div className="hero">
+        <div className="hero-content">
+          <h1 className="hero-title">
+            Доставка из лучших ресторанов <span className="gradient-text">Оша</span>
+          </h1>
+          <p className="hero-subtitle">
+            Заказывайте любимые блюда онлайн — быстро, удобно, со скидками!
+          </p>
         </div>
-    );
-}
+      </div>
+
+      <main className="main">
+        <h2 className="section-title">Рестораны</h2>
+        <div className="restaurants-grid">
+          {restaurants.map(r => (
+            <Link to={`/restaurant/${r._id}`} key={r._id} className="restaurant-card">
+              <div className="restaurant-image">
+                {r.image ? (
+                  <img src={`http://localhost:3001${r.image}`} alt={r.name} style={{width:'100%',height:'100%',objectFit:'cover'}} />
+                ) : (
+                  <span style={{fontSize:'60px'}}>🍽️</span>
+                )}
+              </div>
+              <div className="restaurant-info">
+                <h3 className="restaurant-name">{r.name}</h3>
+                <p className="restaurant-meta">{r.description || 'Вкусные блюда'}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </main>
+    </div>
+  );
+};
 
 export default Home;

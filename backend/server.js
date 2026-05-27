@@ -23,6 +23,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/restaurants', require('./routes/restaurants'));
 app.use('/api/dishes', require('./routes/dishes'));
 app.use('/api/orders', require('./routes/orders'));
+app.use('/api/users', require('./routes/users'));
 
 // Создаём папку uploads если нет
 const fs = require('fs');

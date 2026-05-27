@@ -4,30 +4,23 @@ const Order = require('../models/Order');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 
-const LOYALTY_THRESHOLD = 2000;   // порог для скидки
-const LOYALTY_DISCOUNT = 200;     // сумма скидки
+const LOYALTY_THRESHOLD = 2000;
+const LOYALTY_DISCOUNT = 200;
 
-// Создать заказ (применяется скидка автоматически)
+// Создать заказ
 router.post('/', auth, async (req, res) => {
   try {
     const { dishes, orderType, address, phone } = req.body;
     const userId = req.user.userId;
-
-    // Получаем пользователя для проверки totalSpent
     const user = await User.findById(userId);
     
-    // Считаем сумму заказа
     let totalAmount = dishes.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
-    // Проверяем накопительную скидку
     let discountApplied = 0;
     if (user.totalSpent >= LOYALTY_THRESHOLD) {
       discountApplied = LOYALTY_DISCOUNT;
     }
-    
     const finalAmount = Math.max(0, totalAmount - discountApplied);
 
-    // Создаём заказ
     const order = new Order({
       user: userId,
       dishes: dishes.map(d => ({
@@ -46,15 +39,10 @@ router.post('/', auth, async (req, res) => {
 
     await order.save();
 
-    // Обновляем totalSpent пользователя (только когда заказ completed — см. ниже)
-    // Пока что не обновляем, обновим при завершении заказа
-
     res.status(201).json({
       order,
       discountApplied,
-      message: discountApplied > 0 
-        ? `🎉 Применена накопительная скидка ${discountApplied} сом!` 
-        : null
+      message: discountApplied > 0 ? `🎉 Скидка ${discountApplied} сом!` : null
     });
   } catch (err) {
     res.status(500).json({ message: 'Ошибка сервера', error: err.message });
@@ -73,24 +61,35 @@ router.get('/my', auth, async (req, res) => {
   }
 });
 
-// Завершить заказ (admin/owner) — обновляет totalSpent
+// Завершить заказ
 router.patch('/:id/complete', auth, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
     if (!order) {
       return res.status(404).json({ message: 'Заказ не найден' });
     }
-
     order.status = 'completed';
     await order.save();
-
-    // Обновляем totalSpent пользователя
-    await User.findByIdAndUpdate(
-      order.user,
-      { $inc: { totalSpent: order.finalAmount } }
-    );
-
+    await User.findByIdAndUpdate(order.user, { $inc: { totalSpent: order.finalAmount } });
     res.json({ message: 'Заказ завершён', order });
+  } catch (err) {
+    res.status(500).json({ message: 'Ошибка сервера' });
+  }
+});
+
+// Изменить статус заказа
+router.patch('/:id/status', auth, async (req, res) => {
+  try {
+    const { status } = req.body;
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+    if (!order) {
+      return res.status(404).json({ message: 'Заказ не найден' });
+    }
+    res.json(order);
   } catch (err) {
     res.status(500).json({ message: 'Ошибка сервера' });
   }

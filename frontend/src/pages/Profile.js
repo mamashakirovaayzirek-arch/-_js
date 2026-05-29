@@ -9,11 +9,6 @@ const translations = {
     title: 'Мой профиль',
     orders: 'Заказов',
     spent: 'Потрачено (сом)',
-    discount: 'Скидка доступна!',
-    toDiscount: 'До скидки',
-    loyalty: '🎁 Программа лояльности',
-    discountText: 'У вас есть скидка 800 сом на следующий заказ!',
-    discountProgress: 'Закажите ещё {count} раз и получите скидку 800 сом',
     logout: '🚪 Выйти',
     orderHistory: '📋 История заказов',
     loading: 'Загрузка...',
@@ -32,11 +27,6 @@ const translations = {
     title: 'Менин профилим',
     orders: 'Буйрутмалар',
     spent: 'Кеткен (сом)',
-    discount: 'Арзандатуу бар!',
-    toDiscount: 'Арзандатууга чейин',
-    loyalty: '🎁 Лоялдуулук программасы',
-    discountText: 'Кийинки буйрутмага 800 сом арзандатууңуз бар!',
-    discountProgress: 'Дагы {count} жолу буйрутма берсеңиз, 800 сом арзандатуу аласыз',
     logout: '🚪 Чыгуу',
     orderHistory: '📋 Буйрутма тарыхы',
     loading: 'Жүктөлүүдө...',
@@ -56,7 +46,7 @@ const translations = {
 const Profile = () => {
   const { user, logout } = useAuth();
   const [orders, setOrders] = useState([]);
-  const [stats, setStats] = useState({ orderCount: 0, totalSpent: 0, discountAvailable: false, nextDiscountIn: 15 });
+  const [stats, setStats] = useState({ orderCount: 0, totalSpent: 0 });
   const [loading, setLoading] = useState(false);
   const [lang, setLang] = useState(() => localStorage.getItem('lang') || 'ru');
 
@@ -74,17 +64,16 @@ const Profile = () => {
   const loadUserData = async () => {
     setLoading(true);
     try {
-      const q = query(collection(db, 'orders'), where('userId', '==', user.id));
+      // 🔥 ИСПРАВЛЕНО: user.uid вместо user.id
+      const q = query(collection(db, 'orders'), where('userId', '==', user.uid));
       const snapshot = await getDocs(q);
       const ordersList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
       const totalSpent = ordersList.reduce((sum, o) => sum + (o.finalAmount || 0), 0);
       const orderCount = ordersList.length;
-      const discountAvailable = orderCount >= 15;
-      const nextDiscountIn = Math.max(0, 15 - (orderCount % 15));
 
       setOrders(ordersList.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
-      setStats({ orderCount, totalSpent, discountAvailable, nextDiscountIn });
+      setStats({ orderCount, totalSpent });
     } catch (err) {
       console.error(err);
     }
@@ -137,30 +126,6 @@ const Profile = () => {
             <div className="stat-value">{stats.totalSpent}</div>
             <div className="stat-label">{t.spent}</div>
           </div>
-          <div className="stat-card">
-            <div className="stat-value">
-              {stats.discountAvailable ? '🎁' : stats.nextDiscountIn}
-            </div>
-            <div className="stat-label">
-              {stats.discountAvailable ? t.discount : t.toDiscount}
-            </div>
-          </div>
-        </div>
-
-        <div className="discount-progress">
-          <h3>{t.loyalty}</h3>
-          <div className="progress-bar">
-            <div 
-              className="progress-fill" 
-              style={{ width: `${((15 - stats.nextDiscountIn) / 15) * 100}%` }}
-            ></div>
-          </div>
-          <p className="progress-text">
-            {stats.discountAvailable 
-              ? t.discountText
-              : t.discountProgress.replace('{count}', stats.nextDiscountIn)
-            }
-          </p>
         </div>
 
         <button 
@@ -214,12 +179,9 @@ const Profile = () => {
               </div>
 
               <div className="order-total">
-                {order.discountApplied > 0 && (
-                  <div className="order-discount">
-                    Скидка {order.discountApplied} сом применена!
-                  </div>
-                )}
-                Итого: {order.finalAmount} сом
+                <div style={{ marginTop: '10px', fontWeight: 'bold' }}>
+                  Итого: {order.finalAmount} сом
+                </div>
               </div>
             </div>
           ))

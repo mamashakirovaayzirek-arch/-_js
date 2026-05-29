@@ -31,7 +31,6 @@ const Home = () => {
 
   useEffect(() => {
     fetchRestaurants();
-    // Слушаем изменение языка
     const handleLangChange = () => {
       setLang(localStorage.getItem('lang') || 'ru');
     };
@@ -54,6 +53,11 @@ const Home = () => {
     }
   };
 
+  // Получаем URL картинки — ищем все возможные поля
+  const getImageUrl = (restaurant) => {
+    return restaurant.imageBase64 || restaurant.image || restaurant.photo || restaurant.imageUrl || restaurant.picture || restaurant.logo || null;
+  };
+
   if (loading) return <div className="loading">{t.loading}</div>;
 
   return (
@@ -72,21 +76,33 @@ const Home = () => {
       <main className="main">
         <h2 className="section-title">{t.restaurants}</h2>
         <div className="restaurants-grid">
-          {restaurants.map(r => (
-            <Link to={`/restaurant/${r.id}`} key={r.id} className="restaurant-card">
-              <div className="restaurant-image">
-                {r.image ? (
-                  <img src={r.image} alt={r.name} style={{width:'100%',height:'100%',objectFit:'cover'}} />
-                ) : (
-                  <span style={{fontSize:'60px'}}>🍽️</span>
-                )}
-              </div>
-              <div className="restaurant-info">
-                <h3 className="restaurant-name">{r.name}</h3>
-                <p className="restaurant-meta">{r.description || t.defaultDesc}</p>
-              </div>
-            </Link>
-          ))}
+          {restaurants.map(r => {
+            const imgUrl = getImageUrl(r);
+            
+            return (
+              <Link to={`/restaurant/${r.id}`} key={r.id} className="restaurant-card">
+                <div className="restaurant-image">
+                  {imgUrl ? (
+                    <img 
+                      src={imgUrl} 
+                      alt={r.name} 
+                      style={{width:'100%', height:'100%', objectFit:'cover'}} 
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.parentElement.insertAdjacentHTML('beforeend', '<span style="font-size:60px">🍽️</span>');
+                      }}
+                    />
+                  ) : (
+                    <span style={{fontSize:'60px'}}>🍽️</span>
+                  )}
+                </div>
+                <div className="restaurant-info">
+                  <h3 className="restaurant-name">{r.name}</h3>
+                  <p className="restaurant-meta">{r.description || t.defaultDesc}</p>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </main>
     </div>

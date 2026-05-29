@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
 
 const translations = {
   ru: {
@@ -119,8 +119,8 @@ const Cart = () => {
     setLoading(true);
     try {
       const orderData = {
-        userId: user.id,
-        userName: user.name,
+        userId: user.uid,  // ← ИСПРАВЛЕНО: user.uid вместо user.id
+        userName: user.name || user.email,
         userEmail: user.email,
         dishes: cart.map(item => ({
           dishId: item.dishId,
@@ -130,7 +130,6 @@ const Cart = () => {
         })),
         totalAmount,
         finalAmount: totalAmount,
-        discountApplied: 0,
         status: 'pending',
         orderType,
         phone,
@@ -139,6 +138,12 @@ const Cart = () => {
       };
 
       await addDoc(collection(db, 'orders'), orderData);
+
+      // Обновляем totalSpent
+      const userRef = doc(db, 'users', user.uid);  // ← ИСПРАВЛЕНО: user.uid
+      const newTotalSpent = (user.totalSpent || 0) + totalAmount;
+      await updateDoc(userRef, { totalSpent: newTotalSpent });
+
       localStorage.removeItem('cart');
       setCart([]);
       navigate('/order-success');

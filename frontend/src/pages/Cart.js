@@ -12,6 +12,9 @@ const translations = {
     remove: 'Удалить',
     total: 'Итого',
     grandTotal: 'Общая сумма',
+    deliveryFee: 'Доставка',
+    finalTotal: 'К оплате',
+    freeDelivery: 'Бесплатно',
     checkout: '📋 Оформление заказа',
     deliveryMethod: 'Способ получения',
     delivery: '🚚 Доставка',
@@ -36,6 +39,9 @@ const translations = {
     remove: 'Өчүрүү',
     total: 'Жыйынтыгы',
     grandTotal: 'Жалпы сумма',
+    deliveryFee: 'Жеткирүү',
+    finalTotal: 'Төлөөгө',
+    freeDelivery: 'Акысыз',
     checkout: '📋 Буйрутма берүү',
     deliveryMethod: 'Алуу ыкмасы',
     delivery: '🚚 Жеткирүү',
@@ -104,6 +110,10 @@ const Cart = () => {
 
   const totalAmount = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
+  // ===== СУММА ДОСТАВКИ =====
+  const deliveryFee = (orderType === 'delivery' && address.trim().length > 0) ? 100 : 0;
+  const finalAmount = totalAmount + deliveryFee;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user) {
@@ -119,7 +129,7 @@ const Cart = () => {
     setLoading(true);
     try {
       const orderData = {
-        userId: user.uid,  // ← ИСПРАВЛЕНО: user.uid вместо user.id
+        userId: user.uid,
         userName: user.name || user.email,
         userEmail: user.email,
         dishes: cart.map(item => ({
@@ -129,7 +139,8 @@ const Cart = () => {
           price: item.price
         })),
         totalAmount,
-        finalAmount: totalAmount,
+        deliveryFee,
+        finalAmount,
         status: 'pending',
         orderType,
         phone,
@@ -139,9 +150,8 @@ const Cart = () => {
 
       await addDoc(collection(db, 'orders'), orderData);
 
-      // Обновляем totalSpent
-      const userRef = doc(db, 'users', user.uid);  // ← ИСПРАВЛЕНО: user.uid
-      const newTotalSpent = (user.totalSpent || 0) + totalAmount;
+      const userRef = doc(db, 'users', user.uid);
+      const newTotalSpent = (user.totalSpent || 0) + finalAmount;
       await updateDoc(userRef, { totalSpent: newTotalSpent });
 
       localStorage.removeItem('cart');
@@ -192,9 +202,30 @@ const Cart = () => {
         </div>
       ))}
 
+      {/* ===== ИТОГОВЫЙ БЛОК С ДОСТАВКОЙ ===== */}
       <div className="grand-total">
-        <p>{t.grandTotal}:</p>
-        <p className="grand-total-amount">{totalAmount} сом</p>
+        <div className="grand-total-row">
+          <span>{t.grandTotal}:</span>
+          <span>{totalAmount} сом</span>
+        </div>
+        {orderType === 'delivery' && address.trim().length > 0 && (
+          <div className="grand-total-row delivery-fee">
+            <span>{t.deliveryFee}:</span>
+            <span>{deliveryFee} сом</span>
+          </div>
+        )}
+        {orderType === 'delivery' && address.trim().length > 0 && (
+          <div className="grand-total-row final">
+            <span>{t.finalTotal}:</span>
+            <span className="grand-total-amount">{finalAmount} сом</span>
+          </div>
+        )}
+        {orderType !== 'delivery' && (
+          <div className="grand-total-row final">
+            <span>{t.finalTotal}:</span>
+            <span className="grand-total-amount">{totalAmount} сом</span>
+          </div>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="order-section">
@@ -221,7 +252,13 @@ const Cart = () => {
         {orderType === 'delivery' && (
           <div className="form-group">
             <label>{t.address}</label>
-            <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t.addressPlaceholder} required />
+            <input 
+              type="text" 
+              value={address} 
+              onChange={(e) => setAddress(e.target.value)} 
+              placeholder={t.addressPlaceholder} 
+              required 
+            />
           </div>
         )}
 
@@ -238,7 +275,7 @@ const Cart = () => {
         </div>
 
         <button type="submit" className="submit-btn" disabled={loading}>
-          {loading ? t.submitting : `${t.submit} ${totalAmount} сом`}
+          {loading ? t.submitting : `${t.submit} ${finalAmount} сом`}
         </button>
       </form>
     </div>
